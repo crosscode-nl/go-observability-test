@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/tmp/loki
+
+  fluentd:
+    image: grafana/fluent-plugin-loki:main
+    command:
+      - "fluentd"
+      - "-v"
+      - "-p"
+      - "/fluentd/plugins"
+    environment:
+      LOKI_URL: http://loki:3100
+      LOKI_USERNAME:
+      LOKI_PASSWORD:
+    deploy:
+      mode: global
+ #   configs:
+ #     - source: loki_config
+ #       target: /fluentd/etc/loki/loki.conf
+    depends_on:
+      - loki
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+
+  tempo:
+    image: grafana/tempo:latest
+    ports:
+      - "3200:3200" # Default port for Tempo's HTTP and gRPC
+      - "34317:4317" # Default gRPC port for OpenTelemetry
+      - "55681:55681" # Default HTTP port for OpenTelemetry
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - tempo-data:/var/tempo
+      - ./tempo.yaml:/etc/tempo.yaml
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    depends_on:
+      - loki
+      - tempo
+      - prometheus
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    depends_on:
+      - loki
+      - tempo
+      - prometheus
+    command: [ "--config=/etc/otel-collector-config.yaml" ]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317" # Default port for OTLP/gRPC
+      - "4318:4318" # Default port for OTLP/HTTP
+
+volumes:
+  loki-data:
+  grafana-data:
+  tempo-data:
+
