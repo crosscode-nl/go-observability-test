@@ -6,39 +6,17 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - loki-data:/tmp/loki
-
-  fluentd:
-    image: grafana/fluent-plugin-loki:main
-    command:
-      - "fluentd"
-      - "-v"
-      - "-p"
-      - "/fluentd/plugins"
-    environment:
-      LOKI_URL: http://loki:3100
-      LOKI_USERNAME:
-      LOKI_PASSWORD:
-    deploy:
-      mode: global
- #   configs:
- #     - source: loki_config
- #       target: /fluentd/etc/loki/loki.conf
-    depends_on:
-      - loki
-    ports:
-      - "24224:24224"
-      - "24224:24224/udp"
+      - ./loki-data:/tmp/loki
 
   tempo:
     image: grafana/tempo:latest
     ports:
       - "3200:3200" # Default port for Tempo's HTTP and gRPC
       - "34317:4317" # Default gRPC port for OpenTelemetry
-      - "55681:55681" # Default HTTP port for OpenTelemetry
+      - "34318:4318" # Default HTTP port for OpenTelemetry
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
-      - tempo-data:/var/tempo
+      - ./tempo-data:/var/tempo
       - ./tempo.yaml:/etc/tempo.yaml
 
   prometheus:
@@ -57,7 +35,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - grafana-data:/var/lib/grafana
+      - ./grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
 
   otel-collector:
@@ -73,8 +51,28 @@ services:
       - "4317:4317" # Default port for OTLP/gRPC
       - "4318:4318" # Default port for OTLP/HTTP
 
-volumes:
-  loki-data:
-  grafana-data:
-  tempo-data:
+  slog:
+    build:
+      context: ../../
+      dockerfile: slog.Dockerfile
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://loki:3100/loki/api/v1/push"
+
+  trace:
+    build:
+      context: ../../
+      dockerfile: trace.Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+      OTEL_SERVICE_NAME: "trace"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+
+
+#volumes:
+#  loki-data:
+#  grafana-data:
+#  tempo-data:
 

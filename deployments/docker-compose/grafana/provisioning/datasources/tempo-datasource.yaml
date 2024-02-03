@@ -5,6 +5,4 @@ datasources:
     type: tempo
     access: proxy
     url: http://tempo:3200
-    jsonData:
-      httpMethod: GET
     editable: true

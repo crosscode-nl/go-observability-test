@@ -12,8 +12,8 @@ exporters:
     default_labels_enabled:
       exporter: false
       job: true
-  otlp:
-    endpoint: tempo:34317
+  otlphttp:
+    endpoint: http://tempo:4318
     tls:
       insecure: true
 
@@ -21,7 +21,7 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [otlp]
+      exporters: [otlphttp]
     metrics:
       receivers: [otlp]
       exporters: [prometheusremotewrite]
