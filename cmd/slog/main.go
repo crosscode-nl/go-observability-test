@@ -10,9 +10,14 @@ import (
 	"time"
 )
 
+func initLogger() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+}
+
 func main() {
 	// Initialize the logger
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	initLogger()
 
 	// Context to handle cancellation
 	ctx, cancel := context.WithCancel(context.Background())
@@ -35,12 +40,12 @@ func main() {
 			case <-ticker.C:
 				// Generate a random temperature
 				temperature := rand.Float64() * 35.0 // Random temperature up to 35 degrees Celsius
-				logger.Info("Current temperature", "temperature", temperature)
+				slog.InfoContext(ctx, "Current temperature", slog.Float64("temperature", temperature))
 			}
 		}
 	}()
 
 	// Wait for stop signal
 	<-signals
-	logger.Info("Shutdown signal received, exiting...")
+	slog.InfoContext(ctx, "Shutdown signal received, exiting...")
 }

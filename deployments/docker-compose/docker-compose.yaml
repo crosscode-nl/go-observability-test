@@ -61,6 +61,16 @@ services:
       options:
         loki-url: "http://127.0.0.1:3100/loki/api/v1/push"
 
+  otel-slog:
+    build:
+      context: ../../
+      dockerfile: otel-slog.Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+      OTEL_SERVICE_NAME: "otel-slog"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+
   otel-trace:
     build:
       context: ../../

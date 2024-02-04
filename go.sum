@@ -1,3 +1,7 @@
+github.com/agoda-com/opentelemetry-go/otelslog v0.1.1 h1:6nV8PZCzySHuh9kP/HZ2OJqGucwQiM+yZRugKDvtzj4=
+github.com/agoda-com/opentelemetry-go/otelslog v0.1.1/go.mod h1:CSc0veIcY/HsIfH7l5PGtIpRvBttk09QUQlweVkD2PI=
+github.com/agoda-com/opentelemetry-logs-go v0.3.0 h1:d2lMVUfCDeLzVgTxMeSU8IWaMXjwD4sVKigEZBGwcsw=
+github.com/agoda-com/opentelemetry-logs-go v0.3.0/go.mod h1:k3QR1O5AOl+dFC7pkrK9wWmoD72jjDONPFHi9dAgLJc=
 github.com/cenkalti/backoff/v4 v4.2.1 h1:y4OZtCnogmCPw98Zjyt5a6+QwPLGkiQsYW5oUqylYbM=
 github.com/cenkalti/backoff/v4 v4.2.1/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
