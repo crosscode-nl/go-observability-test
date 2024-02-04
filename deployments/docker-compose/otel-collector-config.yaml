@@ -5,8 +5,8 @@ receivers:
       http:
 
 exporters:
-  prometheusremotewrite:
-    endpoint: http://prometheus:9090/api/prom/push
+  prometheus:
+    endpoint: "0.0.0.0:31234"
   loki:
     endpoint: http://loki:3100/loki/api/v1/push
     default_labels_enabled:
@@ -24,7 +24,7 @@ service:
       exporters: [otlphttp]
     metrics:
       receivers: [otlp]
-      exporters: [prometheusremotewrite]
+      exporters: [prometheus]
     logs:
       receivers: [otlp]
       exporters: [loki]

@@ -14,7 +14,7 @@ WORKDIR /app
 COPY . .
 
 # Build the Go app
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o trace ./cmd/trace/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o otel-trace ./cmd/otel-trace/main.go
 
 # Step 2: Runtime stage
 FROM alpine:latest
@@ -25,7 +25,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage
-COPY --from=builder /app/trace .
+COPY --from=builder /app/otel-trace .
 
 # Command to run the executable
-CMD ["./trace"]
+CMD ["./otel-trace"]

@@ -50,6 +50,7 @@ services:
     ports:
       - "4317:4317" # Default port for OTLP/gRPC
       - "4318:4318" # Default port for OTLP/HTTP
+      - "31234:31234" # Prometheus endpoint for scraping
 
   slog:
     build:
@@ -58,18 +59,27 @@ services:
     logging:
       driver: loki
       options:
-        loki-url: "http://loki:3100/loki/api/v1/push"
+        loki-url: "http://127.0.0.1:3100/loki/api/v1/push"
 
-  trace:
+  otel-trace:
     build:
       context: ../../
-      dockerfile: trace.Dockerfile
+      dockerfile: otel-trace.Dockerfile
     environment:
       OTEL_EXPORTER_OTLP_INSECURE: "true"
-      OTEL_SERVICE_NAME: "trace"
+      OTEL_SERVICE_NAME: "otel-trace"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
       OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
 
+  otel-metrics:
+    build:
+      context: ../../
+      dockerfile: otel-metrics.Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+      OTEL_SERVICE_NAME: "otel-metrics"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
 
 #volumes:
 #  loki-data:
