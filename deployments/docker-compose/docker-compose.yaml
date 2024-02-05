@@ -21,16 +21,14 @@ services:
       - ./storage/tempo-data:/var/tempo
       - ./config/tempo.yaml:/etc/tempo.yaml
 
-  mimir:
-    image: grafana/mimir:latest
-    command: ["-config.file=/etc/mimir.yaml"]
-    volumes:
-      - ./config/mimir.yaml:/etc/mimir.yaml
-      - ./config/alertmanager-fallback-config.yaml:/etc/alertmanager-fallback-config.yaml
-      - ./storage/mimir-data:/data
-
   prometheus:
     image: prom/prometheus:latest
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-remote-write-receiver"
     volumes:
       - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:

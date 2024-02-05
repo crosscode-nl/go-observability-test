@@ -35,7 +35,7 @@ func InitMeter(ctx context.Context, name string, options ...metricApi.MeterOptio
 	}
 
 	meterProvider := metric.NewMeterProvider(
-		metric.WithReader(metric.NewPeriodicReader(exp)),
+		metric.WithReader(metric.NewPeriodicReader(exp, metric.WithInterval(15*time.Second))),
 		metric.WithResource(res))
 
 	otel.SetMeterProvider(meterProvider)
