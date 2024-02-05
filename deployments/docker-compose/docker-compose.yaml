@@ -5,8 +5,10 @@ services:
     image: grafana/loki:latest
     ports:
       - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
     volumes:
-      - ./loki-data:/tmp/loki
+      - ./storage/loki-data:/tmp/loki
+      - ./config/loki.yaml:/etc/loki/local-config.yaml
 
   tempo:
     image: grafana/tempo:latest
@@ -16,13 +18,13 @@ services:
       - "34318:4318" # Default HTTP port for OpenTelemetry
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
-      - ./tempo-data:/var/tempo
-      - ./tempo.yaml:/etc/tempo.yaml
+      - ./storage/tempo-data:/var/tempo
+      - ./config/tempo.yaml:/etc/tempo.yaml
 
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
 
@@ -35,8 +37,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./grafana-data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./storage/grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
@@ -46,7 +48,7 @@ services:
       - prometheus
     command: [ "--config=/etc/otel-collector-config.yaml" ]
     volumes:
-      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ./config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
       - "4317:4317" # Default port for OTLP/gRPC
       - "4318:4318" # Default port for OTLP/HTTP
