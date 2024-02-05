@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
+	"github.com/crosscode-nl/go-observability-test/pkg/otel"
 	metricApi "go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/sdk/metric"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -16,32 +14,14 @@ import (
 
 const meterName = "https://github.com/crosscode-nl/go-observability-test/cmd/otel-metrics"
 
-func initMeter(ctx context.Context) (metricApi.Meter, func()) {
-
-	exp, err := otlpmetrichttp.New(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	meterProvider := metric.NewMeterProvider(metric.WithReader(metric.NewPeriodicReader(exp)))
-
-	otel.SetMeterProvider(meterProvider)
-
-	meter := meterProvider.Meter(meterName)
-	return meter, func() {
-		if err := meterProvider.Shutdown(ctx); err != nil {
-			panic(err)
-		}
-	}
-}
-
 func main() {
 	ctx := context.Background()
-	meter, cancelMeterProvider := initMeter(ctx)
-	defer cancelMeterProvider()
-	// Context to handle cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	cancelMeterProvider := otel.InitMeter(ctx, meterName)
+	defer cancelMeterProvider()
+	// Context to handle cancellation
 
 	// Set up channel to catch system signals
 	signals := make(chan os.Signal, 1)
@@ -51,7 +31,7 @@ func main() {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	requestCounter, err := meter.Int64Counter("request")
+	requestCounter, err := otel.Meter.Int64Counter("request")
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +39,7 @@ func main() {
 	var tempMutex sync.Mutex
 	var temperature float64
 
-	_, err = meter.Float64ObservableGauge("temperature", metricApi.WithFloat64Callback(func(ctx context.Context, observer metricApi.Float64Observer) error {
+	_, err = otel.Meter.Float64ObservableGauge("temperature", metricApi.WithFloat64Callback(func(ctx context.Context, observer metricApi.Float64Observer) error {
 		tempMutex.Lock()
 		temp := temperature
 		tempMutex.Unlock()

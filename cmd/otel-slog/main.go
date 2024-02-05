@@ -2,11 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"github.com/agoda-com/opentelemetry-go/otelslog"
-	"github.com/agoda-com/opentelemetry-logs-go/exporters/otlp/otlplogs"
-	sdk "github.com/agoda-com/opentelemetry-logs-go/sdk/logs"
-	"go.opentelemetry.io/otel/sdk/resource"
+	"github.com/crosscode-nl/go-observability-test/pkg/otel"
 	"log/slog"
 	"math/rand"
 	"os"
@@ -15,42 +11,13 @@ import (
 	"time"
 )
 
-func initLogger(ctx context.Context) func() {
-	res, err := resource.New(ctx,
-		// The service name is now picked up from the OTEL_SERVICE_NAME environment variable.
-		resource.WithFromEnv(),
-		resource.WithTelemetrySDK(),
-		resource.WithHost(),
-	)
-
-	if err != nil {
-		panic(fmt.Sprintf("failed to create exporter: %v", err))
-	}
-
-	// configure opentelemetry logger provider
-	logExporter, _ := otlplogs.NewExporter(ctx)
-	loggerProvider := sdk.NewLoggerProvider(
-		sdk.WithBatcher(logExporter),
-		sdk.WithResource(res),
-	)
-
-	otelLogger := slog.New(otelslog.NewOtelHandler(loggerProvider, &otelslog.HandlerOptions{}))
-
-	//configure default logger
-	slog.SetDefault(otelLogger)
-
-	return func() {
-		_ = loggerProvider.Shutdown(ctx)
-	}
-}
-
 func main() {
 
 	// Context to handle cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	cancelLogProvider := initLogger(ctx)
+	cancelLogProvider := otel.InitLogger(ctx)
 	defer cancelLogProvider()
 
 	// Initialize the logger
