@@ -2,6 +2,7 @@ package otel
 
 import (
 	"context"
+	otelContext "github.com/crosscode-nl/go-observability-test/pkg/otel/context"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
@@ -12,9 +13,7 @@ import (
 	"time"
 )
 
-var Tracer trace.Tracer
-
-func InitTracer(ctx context.Context, name string, opts ...trace.TracerOption) (cancel func()) {
+func InitTracer(ctx context.Context, name string, opts ...trace.TracerOption) (newCtx context.Context, cancel func()) {
 
 	// Initialize the OTLP exporter using environment variables for configuration.
 	exporter, err := otlptrace.New(ctx, otlptracehttp.NewClient())
@@ -43,9 +42,9 @@ func InitTracer(ctx context.Context, name string, opts ...trace.TracerOption) (c
 
 	otel.SetTracerProvider(tp)
 
-	Tracer = otel.Tracer(name, opts...)
+	ctx = otelContext.WithTracer(ctx, otel.Tracer(name, opts...))
 
-	return func() {
+	return ctx, func() {
 		ctx, cancelDeadline := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
 		defer cancelDeadline()
 		if err := tp.Shutdown(ctx); err != nil {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	otel "github.com/crosscode-nl/go-observability-test/pkg/otel"
+	otelContext "github.com/crosscode-nl/go-observability-test/pkg/otel/context"
 	"go.opentelemetry.io/otel/attribute"
 	"log"
 	"math/rand"
@@ -13,7 +14,11 @@ import (
 )
 
 func simulateWork(ctx context.Context, workName string) {
-	_, span := otel.Tracer.Start(ctx, workName)
+	tracer, ok := otelContext.Tracer(ctx)
+	if !ok {
+		panic("tracer not available")
+	}
+	_, span := tracer.Start(ctx, workName)
 	defer span.End()
 
 	workDuration := time.Duration(rand.Intn(1000)) * time.Millisecond
@@ -25,7 +30,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	cancelTraceProvider := otel.InitTracer(ctx, "https://github.com/crosscode-nl/go-observability-test/cmd/otel-trace")
+	ctx, cancelTraceProvider := otel.InitTracer(ctx, "https://github.com/crosscode-nl/go-observability-test/cmd/otel-trace")
 	defer cancelTraceProvider()
 
 	signals := make(chan os.Signal, 1)
@@ -40,12 +45,18 @@ func main() {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
+	tracer, ok := otelContext.Tracer(ctx)
+
+	if !ok {
+		panic("tracer not available")
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			ctx, span := otel.Tracer.Start(ctx, "MainOperation")
+			ctx, span := tracer.Start(ctx, "MainOperation")
 			simulateWork(ctx, "WorkPart1")
 			simulateWork(ctx, "WorkPart2")
 			simulateWork(ctx, "WorkPart3")

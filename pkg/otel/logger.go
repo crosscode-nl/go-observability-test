@@ -5,13 +5,14 @@ import (
 	"github.com/agoda-com/opentelemetry-go/otelslog"
 	"github.com/agoda-com/opentelemetry-logs-go/exporters/otlp/otlplogs"
 	sdk "github.com/agoda-com/opentelemetry-logs-go/sdk/logs"
+	otelContext "github.com/crosscode-nl/go-observability-test/pkg/otel/context"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"log"
 	"log/slog"
 	"time"
 )
 
-func InitLogger(ctx context.Context) func() {
+func InitLogger(ctx context.Context) (context.Context, func()) {
 	// configure opentelemetry logger provider
 	logExporter, err := otlplogs.NewExporter(ctx)
 	if err != nil {
@@ -42,7 +43,9 @@ func InitLogger(ctx context.Context) func() {
 	//configure default logger
 	slog.SetDefault(otelLogger)
 
-	return func() {
+	ctx = otelContext.WithLogger(ctx, otelLogger)
+
+	return ctx, func() {
 		ctx, cancelDeadline := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
 		defer cancelDeadline()
 		if err := loggerProvider.Shutdown(ctx); err != nil {

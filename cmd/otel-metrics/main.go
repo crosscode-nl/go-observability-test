@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/crosscode-nl/go-observability-test/pkg/otel"
+	otelContext "github.com/crosscode-nl/go-observability-test/pkg/otel/context"
 	metricApi "go.opentelemetry.io/otel/metric"
 	"math/rand"
 	"os"
@@ -19,7 +20,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	cancelMeterProvider := otel.InitMeter(ctx, meterName)
+	ctx, cancelMeterProvider := otel.InitMeter(ctx, meterName)
 	defer cancelMeterProvider()
 	// Context to handle cancellation
 
@@ -29,9 +30,14 @@ func main() {
 
 	// Ticker for logging every 10 seconds
 	ticker := time.NewTicker(10 * time.Second)
-	defer ticker.Stop()
 
-	requestCounter, err := otel.Meter.Int64Counter("request")
+	meter, ok := otelContext.Meter(ctx)
+
+	if !ok {
+		panic("meter not available")
+	}
+
+	requestCounter, err := meter.Int64Counter("request")
 	if err != nil {
 		panic(err)
 	}
@@ -39,7 +45,7 @@ func main() {
 	var tempMutex sync.Mutex
 	var temperature float64
 
-	_, err = otel.Meter.Float64ObservableGauge("temperature", metricApi.WithFloat64Callback(func(ctx context.Context, observer metricApi.Float64Observer) error {
+	_, err = meter.Float64ObservableGauge("temperature", metricApi.WithFloat64Callback(func(ctx context.Context, observer metricApi.Float64Observer) error {
 		tempMutex.Lock()
 		temp := temperature
 		tempMutex.Unlock()

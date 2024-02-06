@@ -2,6 +2,7 @@ package otel
 
 import (
 	"context"
+	otelContext "github.com/crosscode-nl/go-observability-test/pkg/otel/context"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	metricApi "go.opentelemetry.io/otel/metric"
@@ -11,9 +12,7 @@ import (
 	"time"
 )
 
-var Meter metricApi.Meter
-
-func InitMeter(ctx context.Context, name string, options ...metricApi.MeterOption) (cancel func()) {
+func InitMeter(ctx context.Context, name string, options ...metricApi.MeterOption) (newCtx context.Context, cancel func()) {
 
 	exp, err := otlpmetrichttp.New(ctx)
 	if err != nil {
@@ -40,8 +39,9 @@ func InitMeter(ctx context.Context, name string, options ...metricApi.MeterOptio
 
 	otel.SetMeterProvider(meterProvider)
 
-	Meter = meterProvider.Meter(name, options...)
-	return func() {
+	ctx = otelContext.WithMeter(ctx, meterProvider.Meter(name, options...))
+
+	return ctx, func() {
 		ctx, cancelDeadline := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
 		defer cancelDeadline()
 		if err := meterProvider.Shutdown(ctx); err != nil {
